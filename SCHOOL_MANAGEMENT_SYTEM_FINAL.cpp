@@ -298,6 +298,9 @@ void saveScheduleToFile(const char *sectionName) {
     FILE *file = fopen("schedules.txt", "a"); // append mode
     if(!file){
         printf("\n(System): Error opening schedules.txt!\n");
+        printf("Press any key to go back...\n");   // <-- IMPORTANT
+        getch();                                 // <-- prevents instant exit
+        goToDashboard();                         // <-- safely return to menu
         return;
     }
 
@@ -469,7 +472,7 @@ void universalHeader() {
 
 
 /* =============================================================
-   PHILTECH — 36 Unique Schedule Placeholder Templates 
+   PHILTECH â€” 36 Unique Schedule Placeholder Templates 
    ============================================================= */
 
 void printSchedulePlaceholder(const char *program, const char *sectionName, int year) {
@@ -574,7 +577,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
                 printf("                                    +----------------------------------+\n");
 				printf("                                    |     BSCS 3 - Sunday Schedule     |\n");
 				printf("                                    +----------------------------------+\n");
-				printf("                                    |   Placeholder — Schedule TBD     |\n");
+				printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 				printf("                                    +----------------------------------+\n\n");
 
                 ch = getch();
@@ -585,7 +588,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
                 printf("                                    +----------------------------------+\n");
 				printf("                                    |     BSCS 4 - Sunday Schedule     |\n");
 				printf("                                    +----------------------------------+\n");
-				printf("                                    |   Placeholder — Schedule TBD     |\n");
+				printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 				printf("                                    +----------------------------------+\n\n");
 
                 ch = getch();
@@ -690,7 +693,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
                 printf("                                    +----------------------------------+\n");
 				printf("                                    |     BSOA 3 - Sunday Schedule     |\n");
 				printf("                                    +----------------------------------+\n");
-				printf("                                    |   Placeholder — Schedule TBD     |\n");
+				printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 				printf("                                    +----------------------------------+\n\n");
 
                 ch = getch();
@@ -701,7 +704,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
                 printf("                                    +----------------------------------+\n");
 				printf("                                    |     BSOA 4 - Sunday Schedule     |\n");
 				printf("                                    +----------------------------------+\n");
-				printf("                                    |   Placeholder — Schedule TBD     |\n");
+				printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 				printf("                                    +----------------------------------+\n\n");
 
                 ch = getch();
@@ -805,7 +808,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
                 printf("                                    +----------------------------------+\n");
                 printf("                                    |   BTVTED 3 - Sunday Schedule     |\n");
                 printf("                                    +----------------------------------+\n");
-                printf("                                    |   Placeholder — Schedule TBD     |\n");
+                printf("                                    |   Placeholder â€” Schedule TBD     |\n");
                 printf("                                    +----------------------------------+\n\n"); 
                 ch = getch();
                 if (ch == '9') { goToDashboard(); return; }
@@ -815,7 +818,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
                 printf("                                    +----------------------------------+\n");
 				printf("                                    |   BTVTED 4 - Sunday Schedule     |\n");
 				printf("                                    +----------------------------------+\n");
-				printf("                                    |   Placeholder — Schedule TBD     |\n");
+				printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 				printf("                                    +----------------------------------+\n\n");
 
                 ch = getch();
@@ -880,7 +883,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSCS 1N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             ch = getch();
@@ -943,7 +946,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSCS 2N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
             ch = getch();
             if (ch == '9') { goToDashboard(); return; }
@@ -1002,7 +1005,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSCS 3N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             ch = getch();
@@ -1066,7 +1069,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSCS 4N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             ch = getch();
@@ -1136,7 +1139,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSOA 1N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             char ch = getch();
@@ -1149,7 +1152,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSOA 2M1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
 
@@ -1272,7 +1275,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSOA 3N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             char ch = getch();
@@ -1336,7 +1339,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |        BSOA 4N1 Schedule         |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             char ch = getch();
@@ -1403,7 +1406,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |       BTVTED 1N1 Schedule        |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
 
@@ -1417,7 +1420,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |       BTVTED 2M1 Schedule        |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             char ch = getch();
@@ -1548,7 +1551,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
             printf("                                    +----------------------------------+\n");
 			printf("                                    |       BTVTED 3N1 Schedule        |\n");
 			printf("                                    +----------------------------------+\n");
-			printf("                                    |   Placeholder — Schedule TBD     |\n");
+			printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 			printf("                                    +----------------------------------+\n\n");
 
             char ch = getch();
@@ -1679,7 +1682,7 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
     printf("                                    +----------------------------------+\n");
 	printf("                                    |       Schedule Placeholder       |\n");
 	printf("                                    +----------------------------------+\n");
-	printf("                                    |   Placeholder — Schedule TBD     |\n");
+	printf("                                    |   Placeholder â€” Schedule TBD     |\n");
 	printf("                                    +----------------------------------+\n\n");
 
     ch = getch();
@@ -1784,7 +1787,7 @@ void printSectionMenu() {
         return;
     }
 
-    // (Your existing section selection code continues below…)
+    // (Your existing section selection code continues belowâ€¦)
 }
 
 
@@ -1853,17 +1856,39 @@ void resetTodayAttendance() {
 
 void takeAttendance(const char *sectionName) {
     FILE *f = fopen("schedules.txt","r");
-    if(!f){ printf("Cannot open schedules.txt\n"); getch(); return; }
+if(!f){
+    printf("Cannot open schedules.txt\n");
+    printf("Press any key to return...\n");
+    getch();
+    goToDashboard();   // safe return
+    return;
+}
+
 
     char line[512], email[200], fullName[200], program[64], scheduleType[64], section[64];
     char bareSection[32];
     getBareSection(sectionName, bareSection);
 
     FILE *fout = fopen("attendance_today.txt","w");
-    if(!fout) { fclose(f); printf("Cannot open attendance_today.txt\n"); getch(); return; }
+if(!fout) { 
+    fclose(f); 
+    printf("Cannot open attendance_today.txt\n");
+    printf("Press any key to return...\n");
+    getch();
+    goToDashboard();
+    return; 
+}
 
     FILE *fhist = fopen("attendance_history.txt","a"); // append to history
-    if(!fhist){ fclose(f); fclose(fout); printf("Cannot open attendance_history.txt\n"); getch(); return; }
+if(!fhist){ 
+    fclose(f); 
+    fclose(fout); 
+    printf("Cannot open attendance_history.txt\n");
+    printf("Press any key to return...\n");
+    getch();
+    goToDashboard();
+    return; 
+}
 
     // Get today's date
     char todayDate[12];
@@ -2445,7 +2470,7 @@ START_CHANGE:
     printf("                             |                                                                  |\n");
     printf("                             +------------------------------------------------------------------+\n\n");
 
-    /* ? REMOVE button print here — THEY APPEAR LATER */
+    /* ? REMOVE button print here â€” THEY APPEAR LATER */
 
     /* ---------------- NEW PASSWORD INPUT ---------------- */
     showCursor(1);
@@ -2833,7 +2858,7 @@ void viewFacultySchedule(const char *facultyName, const char *role) {
     system("cls");
     printf("\n");
     printf("                             +------------------------------------------------------------------+\n");
-    printf("                             |                 FACULTY SCHEDULE — %s\n", facultyName);
+    printf("                             |                 FACULTY SCHEDULE â€” %s\n", facultyName);
     printf("                             +------------------------------------------------------------------+\n\n");
 
     /* If no schedules at all */
@@ -3127,7 +3152,7 @@ void forgotPasswordPage() {
                 strncpy(storedEmail, copy, len);
                 storedEmail[len] = '\0';
             } else {
-                /* malformed line — skip */
+                /* malformed line â€” skip */
                 continue;
             }
 
@@ -3166,7 +3191,7 @@ return;
 }
 
 /* -------------------------------------------------------------------
-   STEP 1 — Draw static form (unchanged)
+   STEP 1 â€” Draw static form (unchanged)
    ------------------------------------------------------------------- */
 void drawForm() {
     system("cls");
@@ -3221,7 +3246,7 @@ int checkSection(char section[]);
    ------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------
-   STEP 1 — createAccount() (secondary)
+   STEP 1 â€” createAccount() (secondary)
    ------------------------------------------------------------------- */
 void createAccount() {
 
@@ -3336,7 +3361,7 @@ NAV1:
 
 
 /* -------------------------------------------------------------------
-   STEP 2 – accountInfo()
+   STEP 2 â€“ accountInfo()
    ------------------------------------------------------------------- */
 void accountInfo() {
 
@@ -3496,7 +3521,7 @@ NAV2:
 }
 
 /* -------------------------------------------------------------------
-   STEP 3 – positionChoices (saves user)
+   STEP 3 â€“ positionChoices (saves user)
    ------------------------------------------------------------------- */
 void positionChoices() {
     char key;
@@ -3505,7 +3530,7 @@ void positionChoices() {
     strcpy(facultyType, ""); // reset faculty type
 
     /* ======================
-       STEP 3 — ROLE SELECT
+       STEP 3 â€” ROLE SELECT
        ====================== */
     while (1) {
         system("cls");
@@ -3912,9 +3937,10 @@ void viewSchedule() {
         printf("                             +-------------------------------------------------------------+\n");
         printf("                             |     ERROR: Cannot open schedules.txt                       |\n");
         printf("                             +-------------------------------------------------------------+\n\n");
-        Sleep(1500);
-        goToDashboard();
-        return;
+        printf("Press any key to return...\n");
+    getch();                // Let user read the error
+    goToDashboard();        // Return safely
+    return;
     }
 
     char line[512];
@@ -4061,7 +4087,7 @@ ProgramMenu:
     else if (choice=='T'||choice=='t') strcpy(profMajor, "BTVTEd");
     else {
         printf("                             +-------------------------------------------------------------+\n");
-        printf("                             |                  INVALID INPUT — TRY AGAIN                  |\n");
+        printf("                             |                  INVALID INPUT â€” TRY AGAIN                  |\n");
         printf("                             +-------------------------------------------------------------+\n\n");
         Sleep(1000);
         goto ProgramMenu;
@@ -4102,7 +4128,7 @@ YearMenu:
     else if (choice=='4') yearInt = 4;
     else {
         printf("                             +-------------------------------------------------------------+\n");
-        printf("                             |                  INVALID INPUT — TRY AGAIN                  |\n");
+        printf("                             |                  INVALID INPUT â€” TRY AGAIN                  |\n");
         printf("                             +-------------------------------------------------------------+\n\n");
         Sleep(1000);
         goto YearMenu;
@@ -4139,14 +4165,14 @@ SchedMenu:
     else if (choice=='2') strcpy(scheduleTypeLocal, "Sunday Class");
     else {
         printf("                             +-------------------------------------------------------------+\n");
-        printf("                             |                  INVALID INPUT — TRY AGAIN                  |\n");
+        printf("                             |                  INVALID INPUT â€” TRY AGAIN                  |\n");
         printf("                             +-------------------------------------------------------------+\n\n");
         Sleep(1000);
         goto SchedMenu;
     }
 
     /* ================================================================
-       SHIFT — ONLY FOR REGULAR
+       SHIFT â€” ONLY FOR REGULAR
        ================================================================ */
     if (strcmp(scheduleTypeLocal, "Regular Class") == 0) {
 
@@ -4176,7 +4202,7 @@ ShiftMenu:
         else if (choice=='2') strcpy(shiftLocal, "N");
         else {
             printf("                             +-------------------------------------------------------------+\n");
-            printf("                             |                  INVALID INPUT — TRY AGAIN                  |\n");
+            printf("                             |                  INVALID INPUT â€” TRY AGAIN                  |\n");
             printf("                             +-------------------------------------------------------------+\n\n");
             Sleep(1000);
             goto ShiftMenu;
@@ -4592,7 +4618,7 @@ void loginPage() {
     printf("                             |                         (PHILTECH) PORTAL                        |\n");
     printf("                             +------------------------------------------------------------------+\n");
 
-    /* LOGIN TITLE BOX — widened + centered correctly */
+    /* LOGIN TITLE BOX â€” widened + centered correctly */
     printf("                                                       +------------+\n");
     printf("                                                       |    LOGIN   |\n");
     printf("                                                       +------------+\n");
@@ -4600,7 +4626,7 @@ void loginPage() {
     /* EMAIL LABEL */
     printf("                             Email Address\n");
 
-    /* EMAIL BOX — fixed + matched width */
+    /* EMAIL BOX â€” fixed + matched width */
     printf("                             +------------------------------------------------------------------+\n");
     printf("                             |                                                                  |\n");
     printf("                             +------------------------------------------------------------------+\n\n");
@@ -4608,12 +4634,12 @@ void loginPage() {
     /* PASSWORD LABEL */
     printf("                             Password\n");
 
-    /* PASSWORD BOX — same width */
+    /* PASSWORD BOX â€” same width */
     printf("                             +------------------------------------------------------------------+\n");
     printf("                             |                                                                  |\n");
     printf("                             +------------------------------------------------------------------+\n");
 
-    /* Instructions (will be replaced later on row 19–23) */
+    /* Instructions (will be replaced later on row 19â€“23) */
     printf("\n\n                                 Press [ENTER] to begin typing. Press [C] to create an account.\n\n");
 
     /* ============================================================
@@ -4640,7 +4666,7 @@ void loginPage() {
 
     showCursor(1);
 
-    /* CLEAR THE INSTRUCTION TEXT (rows 19–23) */
+    /* CLEAR THE INSTRUCTION TEXT (rows 19â€“23) */
     for (int r = 19; r <= 23; r++) {
         gotoxy(0, r);
         for (int c = 0; c < 150; c++) printf(" "); // erase entire line
@@ -4718,7 +4744,7 @@ void loginPage() {
 
     } else {
 
-        /* WRONG CREDENTIALS — SHOW MESSAGE IN THE SAME CLEARED AREA (19–23) */
+        /* WRONG CREDENTIALS â€” SHOW MESSAGE IN THE SAME CLEARED AREA (19â€“23) */
 
         for (int r = 19; r <= 23; r++) {
             gotoxy(0, r);
@@ -4923,4 +4949,3 @@ int main(void) {
     loginPage();
     return 0;
 }
-
