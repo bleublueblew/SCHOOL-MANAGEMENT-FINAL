@@ -3266,12 +3266,30 @@ NAME_RETRY:
     gotoxy(30, 8); inputBox(30, 8, firstN, sizeof(firstN));
     gotoxy(67, 8); inputBox(67, 8, middleN, sizeof(middleN));
 
-    if (!validateName(lastN) || !validateName(firstN) || !validateName(middleN)) {
-        gotoxy(1, 27); printf("(System): Each name must be at least 2 characters.");
-        getch();
-        clearBox(1, 27, 90);
-        goto NAME_RETRY;
+   // ---------- INLINE VALIDATION ----------
+int valid = 1; // assume valid
+
+char *names[] = {lastN, firstN, middleN};
+for (int i = 0; i < 3; i++) {
+    int len = strlen(names[i]);
+    if (len < 2) { valid = 0; break; }
+
+    for (int j = 0; j < len; j++) {
+        if (names[i][j] >= '0' && names[i][j] <= '9') {
+            valid = 0;
+            break;
+        }
     }
+    if (!valid) break;
+}
+
+if (!valid) {
+    gotoxy(1, 27);
+    printf("(System): Each name must be at least 2 characters and cannot contain numbers.");
+    getch();
+    clearBox(1, 27, 90);
+    goto NAME_RETRY;
+}
 
     /* ------------ DATE ------------ */
 DATE_RETRY: ;
@@ -3835,8 +3853,8 @@ void profileCard() {
         printf("      |  /            \\         |   +------------------------------------------------------+\n"); 
         printf("      +=========================+   +------------------------------------------------------+\n");
         printf("      | [*] Personal Info       |   | Email:       %-40s|\n", email);
-        printf("      | [2] Inbox               |   | Contact #:   %-40s|\n", contactN);                   
-        printf("      | [0] Sign Out            |   | Password:    %-40s|\n", maskedPass);                   
+        printf("      | [0] Sign Out            |   | Contact #:   %-40s|\n", contactN);                   
+        printf("      |                         |   | Password:    %-40s|\n", maskedPass);                   
         printf("      +-------------------------+   +------------------------------------------------------+\n");
 
         choice = getch();
@@ -3845,12 +3863,6 @@ void profileCard() {
             loading_screen(); 
             goToDashboard(); 
             return; 
-        }
-        else if(choice=='2') { 
-            inbox_Page(); 
-        }
-        else if(choice=='3') { 
-            changePassword(email); 
         }
         else if(choice=='0') { 
             loading_screen(); 
@@ -3864,68 +3876,7 @@ void profileCard() {
 
 
 
-void inbox_Page() {
 
-    system("cls");
-
-    // --- Inline padded buffers for alignment ---
-    char nameField[57], emailField[57];
-    int len;
-
-    // Fullname padding
-    len = strlen(Fullname);
-    if(len >= 56) { strncpy(nameField, Fullname, 56); nameField[56] = '\0'; }
-    else { strcpy(nameField, Fullname); memset(nameField + len, ' ', 56 - len); nameField[56] = '\0'; }
-
-    // Email padding
-    len = strlen(email);
-    if(len >= 56) { strncpy(emailField, email, 56); emailField[56] = '\0'; }
-    else { strcpy(emailField, email); memset(emailField + len, ' ', 56 - len); emailField[56] = '\0'; }
-
-    printf("\n\n\n\n\n");
-
-    printf("   +-------------------------------------------------------------------------------------------------------------+\n");
-    printf("   |                                                PHILTECH PORTAL                                              |\n");
-    printf("   |                                                    INBOX                                                    |\n");
-    printf("   +-------------------------------------------------------------------------------------------------------------+\n");
-    printf("   |                                                                                [ 9 ] Back                   |\n");
-    printf("   +-------------------------------------------------------------------------------------------------------------+\n");
-
-    printf("   +-----------------------+   +--------------------------------------------------------------------------------+\n");
-    printf("   |   PHILTECH ACCOUNT    |   |                                     Inbox                                      |\n");
-    printf("   +=======================+   +================================================================================+\n");
-    printf("   |                       |   |                                                                                |\n");
-    printf("   |                       |   |   %s|\n", nameField);
-    printf("   |                       |   |   %s|\n", emailField);
-    printf("   |                       |   |   > @philtechGMA                                                               |\n");
-    printf("   |                       |   |--------------------------------------------------------------------------------|\n");
-    printf("   |     [ 1 ] Personal    |   |   --------------------------------------------------------------------------   |\n");
-    printf("   |         Information   |   |   --------------------+--------------------------------+--------------------   |\n");
-    printf("   |     [ * ] Inbox       |   |   --------------------|                                |--------------------   |\n");
-    printf("   |     [ 0 ] Sign Out    |   |   --------------------|         Empty Inbox            |--------------------   |\n");
-    printf("   |                       |   |   --------------------|                                |--------------------   |\n");
-    printf("   |                       |   |   --------------------+--------------------------------+--------------------   |\n");
-    printf("   |                       |   |   --------------------------------------------------------------------------   |\n");
-    printf("   |                       |   |   --------------------------------------------------------------------------   |\n");
-    printf("   +-----------------------+   +--------------------------------------------------------------------------------+\n");
-
-    char choose1 = getch();
-
-    switch (choose1) {
-        case '1':
-            profileCard();  // go to personal info screen
-            return;
-
-        case '0':
-            loading_screen();
-            loginPage();
-            return;
-
-        case '9':
-            goToDashboard();   // go back based on role
-            return;
-    }
-}
 
  
 void viewSchedule() {
