@@ -59,6 +59,13 @@ void clearBox(int x, int y, int width) {
     gotoxy(x, y);
 }
 
+
+void printFixed(const char *s, int width) {
+    int len = strlen(s);
+    if(len >= width) for(int i=0;i<width;i++) putchar(s[i]);
+    else { printf("%s", s); for(int i=len;i<width;i++) putchar(' '); }
+}
+
 /* -------------------------------------------------------------------
    Simple ASCII helpers
    ------------------------------------------------------------------- */
@@ -298,9 +305,6 @@ void saveScheduleToFile(const char *sectionName) {
     FILE *file = fopen("schedules.txt", "a"); // append mode
     if(!file){
         printf("\n(System): Error opening schedules.txt!\n");
-        printf("Press any key to go back...\n");   // <-- IMPORTANT
-        getch();                                 // <-- prevents instant exit
-        goToDashboard();                         // <-- safely return to menu
         return;
     }
 
@@ -344,6 +348,47 @@ void loadUserInfo() {
     }
 
     fclose(fu);
+}
+
+void printCell(const char *text, int width) {
+    int i = 0;
+    while (text[i] != '\0' && i < width) {
+        putchar(text[i]);
+        i++;
+    }
+    while (i < width) {
+        putchar(' ');
+        i++;
+    }
+}
+
+void decodeSectionChoice(
+    const char *choice,
+    char *outProgram,
+    char *outSection
+) {
+    // Sunday sections
+    if (strncmp(choice, "Sunday-", 7) == 0) {
+        if (strstr(choice, "BSCS")) strcpy(outProgram, "BS Computer Science");
+        else if (strstr(choice, "BSOA")) strcpy(outProgram, "BS Office Administration");
+        else strcpy(outProgram, "BTVTEd");
+
+        strcpy(outSection, choice);
+        return;
+    }
+
+    // Regular sections
+    if (strncmp(choice, "BSCS", 4) == 0)
+        strcpy(outProgram, "BS Computer Science");
+    else if (strncmp(choice, "BSOA", 4) == 0)
+        strcpy(outProgram, "BS Office Administration");
+    else
+        strcpy(outProgram, "BTVTEd");
+
+    // Extract section (after year)
+    int i = 0;
+    while (choice[i] && !(choice[i] >= '1' && choice[i] <= '4')) i++;
+    strcpy(outSection, choice + i + 1); // skip year digit
 }
 
 
@@ -1693,30 +1738,39 @@ void printSchedulePlaceholder(const char *program, const char *sectionName, int 
 
 
 
-void getBareSection(const char *full, char *bare) {
-    int i = 0;
+/*------------------------ Print Fixed (Excel-like formatting) ------------------------ */
+void printFixedFormatted(const char *s, int width) {
+    int len = 0;
+    while(s[len] != '\0') len++;
+    if(len >= width) for(int i=0;i<width;i++) putchar(s[i]);
+    else { printf("%s", s); for(int i=len;i<width;i++) putchar(' '); }
+}
 
-    /* Sunday sections look like: Sunday-BSOA1 */
+/* ------------------------ Get Bare Section (Program + Section) ------------------------ */
+void getBareSection(const char *full, char *outProgram, char *outSection) {
     if (strncmp(full, "Sunday-", 7) == 0) {
-        strcpy(bare, full);
+        const char *s = full + 7;
+        if (strncmp(s, "BSCS", 4) == 0) strcpy(outProgram, "BS Computer Science");
+        else if (strncmp(s, "BSOA", 4) == 0) strcpy(outProgram, "BS Office Administration");
+        else if (strncmp(s, "BTVTED", 6) == 0) strcpy(outProgram, "BTVTEd");
+        else strcpy(outProgram, "Unknown");
+
+        if (strncmp(s, "BSCS", 4) == 0) strcpy(outSection, s + 4);
+        else if (strncmp(s, "BSOA", 4) == 0) strcpy(outSection, s + 4);
+        else if (strncmp(s, "BTVTED", 6) == 0) strcpy(outSection, s + 6);
+        else strcpy(outSection, "Unknown");
         return;
     }
 
-    /* Find first digit manually */
-    while (full[i] != '\0') {
-        if (full[i] >= '0' && full[i] <= '9')
-            break;
-        i++;
-    }
+    if (strncmp(full, "BSCS", 4) == 0) strcpy(outProgram, "BS Computer Science");
+    else if (strncmp(full, "BSOA", 4) == 0) strcpy(outProgram, "BS Office Administration");
+    else if (strncmp(full, "BTVTED", 6) == 0) strcpy(outProgram, "BTVTEd");
+    else strcpy(outProgram, "Unknown");
 
-    strcpy(bare, full + i);
-}
-
-/* ------------------------ Fixed-width print ------------------------ */
-void printFixed(const char *s, int width) {
-    int len = strlen(s);
-    if(len >= width) for(int i=0;i<width;i++) putchar(s[i]);
-    else { printf("%s", s); for(int i=len;i<width;i++) putchar(' '); }
+    if (strncmp(full, "BSCS", 4) == 0) strcpy(outSection, full + 4);
+    else if (strncmp(full, "BSOA", 4) == 0) strcpy(outSection, full + 4);
+    else if (strncmp(full, "BTVTED", 6) == 0) strcpy(outSection, full + 6);
+    else strcpy(outSection, "Unknown");
 }
 
 
@@ -1849,6 +1903,7 @@ void getSectionChoice(char *selectedSection) {
 
 
 /* ------------------------ Reset Today's Attendance ------------------------ */
+
 void resetTodayAttendance() {
     FILE *f=fopen("attendance_today.txt","w");
     if(f) fclose(f);
@@ -1856,81 +1911,75 @@ void resetTodayAttendance() {
 
 void takeAttendance(const char *sectionName) {
     FILE *f = fopen("schedules.txt","r");
-if(!f){
-    printf("Cannot open schedules.txt\n");
-    printf("Press any key to return...\n");
-    getch();
-    goToDashboard();   // safe return
-    return;
-}
-
+    if(!f){ 
+        printf("Cannot open schedules.txt. Press any key to return to dashboard\n"); 
+        getch(); 
+        goToDashboard(); 
+        return; 
+    }
 
     char line[512], email[200], fullName[200], program[64], scheduleType[64], section[64];
-    char bareSection[32];
-    getBareSection(sectionName, bareSection);
+    char selectedProgram[64], selectedSection[32];
+    getBareSection(sectionName, selectedProgram, selectedSection);
 
     FILE *fout = fopen("attendance_today.txt","w");
-if(!fout) { 
-    fclose(f); 
-    printf("Cannot open attendance_today.txt\n");
-    printf("Press any key to return...\n");
-    getch();
-    goToDashboard();
-    return; 
-}
+    if(!fout){ fclose(f); 
+        printf("Cannot open attendance_today.txt. Press any key to return to dashboard\n"); 
+        getch(); goToDashboard(); return; 
+    }
 
-    FILE *fhist = fopen("attendance_history.txt","a"); // append to history
-if(!fhist){ 
-    fclose(f); 
-    fclose(fout); 
-    printf("Cannot open attendance_history.txt\n");
-    printf("Press any key to return...\n");
-    getch();
-    goToDashboard();
-    return; 
-}
+    FILE *fhist = fopen("attendance_history.txt","a");
+    if(!fhist){ fclose(f); fclose(fout); 
+        printf("Cannot open attendance_history.txt. Press any key to return to dashboard\n"); 
+        getch(); goToDashboard(); return; 
+    }
 
-    // Get today's date
     char todayDate[12];
     time_t t = time(NULL);
     struct tm *tm_info = localtime(&t);
     strftime(todayDate, sizeof(todayDate), "%Y-%m-%d", tm_info);
 
-    int studentCount = 0;
-    int pageSize = 10;  // local page size
+    int studentCount = 0, pageSize = 10;
 
     drawAttendanceHeader("ATTENDANCE RECORDING", sectionName);
     printf("                             [Press P=Present, A=Absent, E=Excused]\n\n");
     printf("                                   | %-30s | MARK |\n", "NAME");
     printf("                                   +--------------------------------+------+\n");
 
-    while(fgets(line, sizeof(line), f)) {
-        line[strcspn(line, "\r\n")] = 0;
+    while(fgets(line,sizeof(line),f)){
+        line[strcspn(line,"\r\n")] = 0;
         if(sscanf(line,"%[^|]|%[^|]|%[^|]|%[^|]|%[^|]", email, fullName, program, scheduleType, section) != 5)
             continue;
 
-        char studentSection[32];
-        getBareSection(section, studentSection);
-        if(strcmp(studentSection, bareSection) != 0) continue;
+        if(strcmp(program, selectedProgram) != 0) continue;
+        if(strcmp(section, selectedSection) != 0) continue;
 
-        // Print student and get mark
-        printf("                                   | "); printFixed(fullName,30); printf(" | ");
-        char mark = getch();
-        if(mark=='p'||mark=='P') mark='P';
-        else if(mark=='a'||mark=='A') mark='A';
-        else if(mark=='e'||mark=='E') mark='E';
-        else mark='A';
-        printf("%c    |\n", mark);
+      printf("                                   | %-30s | ", fullName);
 
-        // Save to today's attendance and history
+char mark = 0;
+while(1) {
+    mark = getch();
+
+    if(mark=='p'||mark=='P'){ mark='P'; break; }
+    else if(mark=='a'||mark=='A'){ mark='A'; break; }
+    else if(mark=='e'||mark=='E'){ mark='E'; break; }
+    else if(mark=='9'){goToDashboard(); }
+    else {
+        // Print error message below the table row
+        printf("\n                                   [ERROR] Invalid key! Press P, A, or E only.\n");
+        printf("                                   | "); printFixed(fullName,30); printf(" | "); // redraw row
+    }
+}
+
+// Print the final mark in the table
+printf("%c    |\n", mark);
+
         fprintf(fout,"%s|%s|%s|%c\n", todayDate, sectionName, fullName, mark);
         fprintf(fhist,"%s|%s|%s|%c\n", todayDate, sectionName, fullName, mark);
 
         studentCount++;
-
-        // ---- Pagination for long lists ----
-        if(studentCount % pageSize == 0) {
-            printf("\nPress any key to continue to next students...\n");
+        if(studentCount % pageSize == 0){
+            printf("\nPress any key to continue...\n");
             getch();
             drawAttendanceHeader("ATTENDANCE RECORDING", sectionName);
             printf("                             [Press P=Present, A=Absent, E=Excused]\n\n");
@@ -1942,59 +1991,66 @@ if(!fhist){
     if(studentCount==0){
         printf("                             | %-30s |      |\n","(No students enrolled)");
     }
-
     printf("                                   +--------------------------------+------+\n");
+
     fclose(f);
     fclose(fout);
     fclose(fhist);
 
-    // ---- Save/discard prompt ----
+    // ---- Save / Cancel ----
     char choice = 0;
     do {
-        printf("\nDo you want to save attendance and return to dashboard? [S] Save & Return / [C] Cancel: ");
+        printf("\n                                   +--------------------------------+\n");
+          printf("                                   | [S] Save & Return | [C] Cancel |\n");
+          printf("                                   +--------------------------------+\n");
         choice = getch();
         if(choice=='s'||choice=='S') {
             printf("\nAttendance saved. Returning to dashboard...\n");
-            loading_screen();
-			goToDashboard();
+            loading_screen(); goToDashboard();
         }
         else if(choice=='c'||choice=='C') {
             printf("\nAttendance discarded. Returning to dashboard...\n");
-            // remove("attendance_today.txt"); // optional discard
-            loading_screen();
-			goToDashboard();
+            // remove("attendance_today.txt"); // optional
+            goToDashboard();
         }
     } while(1);
 }
 
 
 
+
+
+/* ------------------------ Teacher Summary ------------------------ */
 /* ------------------------ Teacher Summary ------------------------ */
 void generateTeacherSummary(const char *sectionName) {
     FILE *f = fopen("attendance_history.txt","r");
-    if(!f){ printf("No history found.\n"); getch(); return; }
+    if(!f){ printf("No history found. Press any key to return to dashboard\n"); getch(); goToDashboard(); return; }
 
-    char line[256];
-    char section[64], fullName[200]; char mark;
-    char names[100][200]; char dates[100][12];
+    char line[256], section[64], fullName[200], mark;
+    char names[100][200], dates[100][12];
     int nStudents=0, nDates=0;
 
-    char bareSection[32];
-    getBareSection(sectionName, bareSection);
+    char selectedProgram[64], selectedSection[32];
+    getBareSection(sectionName, selectedProgram, selectedSection);
 
     while(fgets(line,sizeof(line),f)){
         line[strcspn(line,"\r\n")] = 0;
-        char ldate[12]; sscanf(line,"%[^|]|%[^|]|%[^|]|%c", ldate, section, fullName, &mark);
+        char ldate[12], lsection[64], lfull[200], lprogram[64]; char lmark;
+        if(sscanf(line,"%[^|]|%[^|]|%[^|]|%c", ldate, lsection, lfull, &lmark) != 4) continue;
 
-        char studentSection[32];
-        getBareSection(section, studentSection);
-        if(strcmp(studentSection, bareSection) != 0) continue;
+        char studentProgram[64], studentSection[32];
+        getBareSection(lsection, studentProgram, studentSection);
 
-        int found=0; for(int i=0;i<nDates;i++) if(strcmp(dates[i],ldate)==0) found=1;
+        if(strcmp(studentProgram, selectedProgram)!=0) continue;
+        if(strcmp(studentSection, selectedSection)!=0) continue;
+
+        int found=0;
+        for(int i=0;i<nDates;i++) if(strcmp(dates[i],ldate)==0) found=1;
         if(!found) strcpy(dates[nDates++],ldate);
 
-        found=0; for(int i=0;i<nStudents;i++) if(strcmp(names[i],fullName)==0) found=1;
-        if(!found) strcpy(names[nStudents++],fullName);
+        found=0;
+        for(int i=0;i<nStudents;i++) if(strcmp(names[i],lfull)==0) found=1;
+        if(!found) strcpy(names[nStudents++],lfull);
     }
     fclose(f);
 
@@ -2007,19 +2063,19 @@ void generateTeacherSummary(const char *sectionName) {
     printf("+\n");
 
     for(int i=0;i<nStudents;i++){
-        printf("                                   | "); printFixed(names[i],30);
+        printf("                                   | "); printFixedFormatted(names[i],30);
         for(int d=0; d<nDates; d++){
             char todayMark=' ';
             FILE *f2=fopen("attendance_history.txt","r");
             while(fgets(line,sizeof(line),f2)){
-                line[strcspn(line,"\r\n")] = 0;
+                line[strcspn(line,"\r\n")]=0;
                 char ldate[12], lsection[64], lfull[200]; char lmark;
-                sscanf(line,"%[^|]|%[^|]|%[^|]|%c",ldate,lsection,lfull,&lmark);
+                if(sscanf(line,"%[^|]|%[^|]|%[^|]|%c",ldate,lsection,lfull,&lmark)!=4) continue;
 
-                char studentSection[32];
-                getBareSection(lsection, studentSection);
+                char studentProgram[64], studentSection[32];
+                getBareSection(lsection, studentProgram, studentSection);
 
-                if(strcmp(ldate,dates[d])==0 && strcmp(studentSection, bareSection)==0 && strcmp(lfull,names[i])==0){
+                if(strcmp(ldate,dates[d])==0 && strcmp(studentProgram,selectedProgram)==0 && strcmp(studentSection,selectedSection)==0 && strcmp(lfull,names[i])==0){
                     todayMark=lmark; break;
                 }
             }
@@ -2028,55 +2084,44 @@ void generateTeacherSummary(const char *sectionName) {
         }
         printf("|\n");
     }
-
     printf("                                   +--------------------------------");
     for(int d=0; d<nDates; d++) printf("+-----");
     printf("+\n");
 
-    // ---- Wait for key, allow '9' to return to dashboard ----
     printf("\nPress any key to return to menu, or '9' to go to dashboard: ");
     char ch = getch();
-    if(ch == '9') {
-        loading_screen();
-        goToDashboard();
-    }
+    if(ch == '9') { goToDashboard(); }
 }
-
 
 
 /* ------------------------ Registrar Summary ------------------------ */
 void generateRegistrarSummary(const char *sectionName) {
     FILE *f = fopen("attendance_history.txt","r");
-    if(!f){ printf("No history found. Press any key to return to dashboard\n"); 
-	getch();
-        goToDashboard();
-    } 
+    if(!f){ printf("No history found. Press any key to return to dashboard\n"); getch(); goToDashboard(); return; }
 
-    char line[256];
-    char section[64], fullName[200]; 
-    char mark;
-    char names[100][200];           // store unique student names
-    int p[100]={0}, a[100]={0}, e[100]={0};
-    int n = 0;                      // number of students found
+    char line[256], section[64], fullName[200]; char mark;
+    char names[100][200]; int p[100]={0}, a[100]={0}, e[100]={0}; int n=0;
 
-    char bareSection[32];
-    getBareSection(sectionName, bareSection);
+    char selectedProgram[64], selectedSection[32];
+    getBareSection(sectionName, selectedProgram, selectedSection);
 
     while(fgets(line,sizeof(line),f)){
-        line[strcspn(line,"\r\n")] = 0;
-        char ldate[12];
-        if(sscanf(line,"%[^|]|%[^|]|%[^|]|%c", ldate, section, fullName, &mark) != 4) continue;
+        line[strcspn(line,"\r\n")]=0;
+        char ldate[12], lsection[64], lfull[200]; char lmark;
+        if(sscanf(line,"%[^|]|%[^|]|%[^|]|%c",ldate,lsection,lfull,&lmark)!=4) continue;
 
-        char studentSection[32];
-        getBareSection(section, studentSection);
-        if(strcmp(studentSection, bareSection) != 0) continue;
+        char studentProgram[64], studentSection[32];
+        getBareSection(lsection, studentProgram, studentSection);
+
+        if(strcmp(studentProgram,selectedProgram)!=0) continue;
+        if(strcmp(studentSection,selectedSection)!=0) continue;
 
         int idx=-1;
-        for(int j=0;j<n;j++){ if(strcmp(names[j], fullName)==0){ idx=j; break; } }
-        if(idx==-1){ idx=n; strcpy(names[n], fullName); n++; }
+        for(int j=0;j<n;j++){ if(strcmp(names[j],lfull)==0){ idx=j; break; } }
+        if(idx==-1){ idx=n; strcpy(names[n],lfull); n++; idx=n-1; }
 
-        if(mark=='P') p[idx]++;
-        else if(mark=='A') a[idx]++;
+        if(lmark=='P') p[idx]++;
+        else if(lmark=='A') a[idx]++;
         else e[idx]++;
     }
     fclose(f);
@@ -2086,7 +2131,7 @@ void generateRegistrarSummary(const char *sectionName) {
     printf("                             +--------------------------------+---------+--------+--------+\n");
 
     for(int i=0;i<n;i++){
-        printf("                               | "); printFixed(names[i],30);
+        printf("                               | "); printFixedFormatted(names[i],30);
         printf("| %6d | %6d | %6d |\n", p[i], a[i], e[i]);
     }
 
@@ -2095,15 +2140,11 @@ void generateRegistrarSummary(const char *sectionName) {
     }
 
     printf("                             +--------------------------------+---------+--------+--------+\n");
-    // ---- Wait for key, allow '9' to return to dashboard ----
     char ch = getch();
-    if(ch == '9') {
-        loading_screen();
-        goToDashboard();
-}
+    if(ch=='9') { goToDashboard(); }
 }
 
-
+/* ------------------------ Wrapper Menus ------------------------ */
 /* ------------------------ Wrapper Menus ------------------------ */
 void teacherAttendanceMenu() {
     char section[64]; printSectionMenu(); getSectionChoice(section);
@@ -2123,6 +2164,7 @@ void registrarSummaryMenu() {
     if(strlen(section)==0) return;
     generateRegistrarSummary(section);
 }
+
 
 
 
@@ -2447,148 +2489,7 @@ void displayAllStudentSchedules() {
 
 
 
-void changePassword(const char *emailInput) {
 
-    char newPass[200];
-    char confirmPass[200];
-
-START_CHANGE:
-
-    system("cls");
-    printf("\n\n");
-    printf("                             +------------------------------------------------------------------+\n");
-    printf("                             |                        CHANGE PASSWORD                            |\n");
-    printf("                             +------------------------------------------------------------------+\n\n");
-
-    printf("                             Enter New Password\n");
-    printf("                             +------------------------------------------------------------------+\n");
-    printf("                             |                                                                  |\n");
-    printf("                             +------------------------------------------------------------------+\n\n");
-
-    printf("                             Confirm New Password\n");
-    printf("                             +------------------------------------------------------------------+\n");
-    printf("                             |                                                                  |\n");
-    printf("                             +------------------------------------------------------------------+\n\n");
-
-    /* ? REMOVE button print here — THEY APPEAR LATER */
-
-    /* ---------------- NEW PASSWORD INPUT ---------------- */
-    showCursor(1);
-    memset(newPass, 0, sizeof(newPass));
-    gotoxy(30, 8);
-
-    int ch, idx = 0;
-
-    while ((ch = getch()) != 13) {       // ENTER finishes typing
-        if (ch == 8 && idx > 0) {        // BACKSPACE
-            idx--;
-            newPass[idx] = '\0';
-            printf("\b \b");
-        }
-        else if (ch >= 32 && ch <= 126 && idx < sizeof(newPass)-1) {
-            newPass[idx++] = ch;
-            putchar('*');
-        }
-        else if (ch == 'b' || ch == 'B') {
-            return;
-        }
-    }
-    newPass[idx] = '\0';
-
-    /* ---------------- CONFIRM PASSWORD INPUT ---------------- */
-    memset(confirmPass, 0, sizeof(confirmPass));
-    gotoxy(30, 13);
-    idx = 0;
-
-    while ((ch = getch()) != 13) {
-        if (ch == 8 && idx > 0) {
-            idx--;
-            confirmPass[idx] = '\0';
-            printf("\b \b");
-        }
-        else if (ch >= 32 && ch <= 126 && idx < sizeof(confirmPass)-1) {
-            confirmPass[idx++] = ch;
-            putchar('*');
-        }
-        else if (ch == 'b' || ch == 'B') {
-            return;
-        }
-    }
-    confirmPass[idx] = '\0';
-
-    /* ---------------- NOW SHOW BUTTONS (AFTER ENTER) ---------------- */
-    showCursor(0);
-    printf("\n\n");
-    printf("                                  +------------------+      +------------------+\n");
-    printf("                                  |     [N] Next     |      |     [B] Back     |\n");
-    printf("                                  +------------------+      +------------------+\n");
-    printf("\n                                  Press N to save or B to go back...");
-
-BUTTONS:
-    char key = getch();
-    if (key >= 'A' && key <= 'Z') key += 32;
-
-    if (key == 'b') return;
-    if (key != 'n') goto BUTTONS;
-
-    /* ---------------- VALIDATION ---------------- */
-    if (strcmp(newPass, confirmPass) != 0) {
-        printf("\n\n                                  Passwords do not match! Press any key...");
-        getch();
-        goto START_CHANGE;
-    }
-
-    /* ---------------- SAFE UPDATE FOR 15 FIELDS ---------------- */
-    FILE *fin = fopen("users.txt", "r");
-    FILE *fout = fopen("users.tmp", "w");
-
-    if (!fin || !fout) {
-        printf("\n\n                                  Error updating password!");
-        getch();
-        return;
-    }
-
-    char line[4096];
-
-    while (fgets(line, sizeof(line), fin)) {
-
-        char fields[15][600];
-        int count = 0;
-
-        char *token = strtok(line, "|");
-        while (token && count < 15) {
-            strcpy(fields[count++], token);
-            token = strtok(NULL, "|");
-        }
-
-        if (count != 15) {   // malformed line
-            fputs(line, fout);
-            continue;
-        }
-
-        /* If same email ? update ONLY password field (#1) */
-        if (strcmp(fields[0], emailInput) == 0) {
-            strcpy(fields[1], newPass);
-        }
-
-        fprintf(fout,
-            "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n",
-            fields[0], fields[1], fields[2], fields[3], fields[4],
-            fields[5], fields[6], fields[7], fields[8], fields[9],
-            fields[10], fields[11], fields[12], fields[13], fields[14]
-        );
-    }
-
-    fclose(fin);
-    fclose(fout);
-    remove("users.txt");
-    rename("users.tmp", "users.txt");
-
-    printf("\n\n                                  Password updated successfully!");
-    printf("\n                                  Press any key...");
-    getch();
-    loading_screen();
-}
 
 
 
@@ -3052,6 +2953,145 @@ void printFacultyList(const char *role){
 
 
 
+void changePassword(const char *emailInput) {
+
+    char newPass[200];
+    char confirmPass[200];
+
+START_CHANGE:
+
+    system("cls");
+    printf("\n\n");
+    printf("                             +------------------------------------------------------------------+\n");
+    printf("                             |                        CHANGE PASSWORD                            |\n");
+    printf("                             +------------------------------------------------------------------+\n\n");
+
+    printf("                             Enter New Password\n");
+    printf("                             +------------------------------------------------------------------+\n");
+    printf("                             |                                                                  |\n");
+    printf("                             +------------------------------------------------------------------+\n\n");
+
+    printf("                             Confirm New Password\n");
+    printf("                             +------------------------------------------------------------------+\n");
+    printf("                             |                                                                  |\n");
+    printf("                             +------------------------------------------------------------------+\n\n");
+
+    showCursor(1);
+    memset(newPass, 0, sizeof(newPass));
+    gotoxy(30, 8);
+
+    int ch, idx = 0;
+
+    while ((ch = getch()) != 13) {
+        if (ch == 8 && idx > 0) {
+            idx--;
+            newPass[idx] = '\0';
+            printf("\b \b");
+        } else if (ch >= 32 && ch <= 126 && idx < sizeof(newPass)-1) {
+            newPass[idx++] = ch;
+            putchar('*');
+        } else if (ch == 'b' || ch == 'B') {
+            return;
+        }
+    }
+    newPass[idx] = '\0';
+
+    memset(confirmPass, 0, sizeof(confirmPass));
+    gotoxy(30, 13);
+    idx = 0;
+
+    while ((ch = getch()) != 13) {
+        if (ch == 8 && idx > 0) {
+            idx--;
+            confirmPass[idx] = '\0';
+            printf("\b \b");
+        } else if (ch >= 32 && ch <= 126 && idx < sizeof(confirmPass)-1) {
+            confirmPass[idx++] = ch;
+            putchar('*');
+        } else if (ch == 'b' || ch == 'B') {
+            return;
+        }
+    }
+    confirmPass[idx] = '\0';
+
+    showCursor(0);
+    printf("\n\n");
+    printf("                                  +------------------+      +------------------+\n");
+    printf("                                  |     [N] Next     |      |     [B] Back     |\n");
+    printf("                                  +------------------+      +------------------+\n");
+    printf("\n                                  Press N to save or B to go back...");
+
+BUTTONS:
+    char key = getch();
+    if (key >= 'A' && key <= 'Z') key += 32;
+
+    if (key == 'b') return;
+    if (key != 'n') goto BUTTONS;
+
+    if (strcmp(newPass, confirmPass) != 0) {
+        printf("\n\n                                  Passwords do not match! Press any key...");
+        getch();
+        goto START_CHANGE;
+    }
+
+    FILE *fin = fopen("users.txt", "r");
+    FILE *fout = fopen("users.tmp", "w");
+
+    if (!fin || !fout) {
+        printf("\n\n                                  Error updating password!");
+        getch();
+        return;
+    }
+
+    char line[4096];
+
+    while (fgets(line, sizeof(line), fin)) {
+        char fields[16][600];  // 16 fields now
+        int count = 0;
+
+        // remove trailing newline / carriage return
+        line[strcspn(line, "\r\n")] = 0;
+
+        char *token = strtok(line, "|");
+        while (token && count < 16) {
+            // trim any \r from token
+            size_t toklen = strlen(token);
+            if (toklen > 0 && token[toklen-1] == '\r')
+                token[toklen-1] = '\0';
+
+            strcpy(fields[count++], token);
+            token = strtok(NULL, "|");
+        }
+
+        // if line has fewer than 16 fields, fill missing with N/A
+        for (int i = count; i < 16; i++)
+            strcpy(fields[i], "N/A");
+
+        // Update password only for the matching email
+        if (strcmp(fields[0], emailInput) == 0)
+            strcpy(fields[1], newPass);
+
+        fprintf(fout,
+            "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n",
+            fields[0], fields[1], fields[2], fields[3],
+            fields[4], fields[5], fields[6], fields[7],
+            fields[8], fields[9], fields[10], fields[11],
+            fields[12], fields[13], fields[14], fields[15]
+        );
+    }
+
+    fclose(fin);
+    fclose(fout);
+    remove("users.txt");
+    rename("users.tmp", "users.txt");
+
+    printf("\n\n                                  Password updated !");
+    printf("\n                                  Press any key...");
+    getch();
+    loading_screen();
+}
+
+
 
 
 
@@ -3266,31 +3306,43 @@ NAME_RETRY:
     gotoxy(30, 8); inputBox(30, 8, firstN, sizeof(firstN));
     gotoxy(67, 8); inputBox(67, 8, middleN, sizeof(middleN));
 
-   // ---------- INLINE VALIDATION ----------
+  // ---------- INLINE VALIDATION ----------
 int valid = 1; // assume valid
 
-char *names[] = {lastN, firstN, middleN};
+char *names[] = { lastN, firstN, middleN };
+
 for (int i = 0; i < 3; i++) {
     int len = strlen(names[i]);
     if (len < 2) { valid = 0; break; }
 
     for (int j = 0; j < len; j++) {
-        if (names[i][j] >= '0' && names[i][j] <= '9') {
-            valid = 0;
-            break;
+        char c = names[i][j];
+
+        // allow letters
+        if ((c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z') ||
+            // allow space
+            c == ' ' ||
+            // allow symbols: . , -
+            c == '.' || c == ',' || c == '-') {
+            continue;
         }
+
+        // everything else (numbers, other symbols) is invalid
+        valid = 0;
+        break;
     }
+
     if (!valid) break;
 }
 
 if (!valid) {
     gotoxy(1, 27);
-    printf("(System): Each name must be at least 2 characters and cannot contain numbers.");
+    printf("(System): Names must be at least 2 characters and may only contain letters, spaces, and . , -");
     getch();
     clearBox(1, 27, 90);
     goto NAME_RETRY;
 }
-
     /* ------------ DATE ------------ */
 DATE_RETRY: ;
     char mS[5], dS[5], yS[6];
@@ -3358,7 +3410,7 @@ ADDRESS_RETRY:
     /* ------------ NAVIGATION ------------ */
 NAV1:
     gotoxy(1, 33);
-    printf(" \n\n All inputs captured successfully!\n");
+    printf(" \n\n All inputs captured !\n");
 
     printf("\n\n\t\t\t+-----------------+      +-----------------+\n");
     printf("\t\t\t|     [N] Next    |      |     [B] Back    |\n");
@@ -3447,19 +3499,22 @@ CONTACT:
         clearBox(1, 25, 80);
         goto CONTACT;
     }
+/* ------------ PASSWORD ------------ */
 
-    /* ------------ PASSWORD ------------ */
 PASSWORD:
     clearBox(3, 18, 20);
-    clearBox(3, 24, 20);
+    clearBox(3, 23, 20);
+    clearBox(3, 23, 20);
 
     memset(passW, 0, sizeof(passW));
     memset(passConfirm, 0, sizeof(passConfirm));
 
-    /* Password typing (masked) */
     gotoxy(3, 18);
+    showCursor(1);
     i = 0;
-    int ch_int;
+
+    int ch_int;   // <-- FIX: declaration
+
     while ((ch_int = getch()) != '\r') {
         if (ch_int == 8 && i > 0) {
             i--;
@@ -3471,9 +3526,9 @@ PASSWORD:
             printf("*");
         }
     }
-
+    showCursor(0);
     if (strlen(passW) < 8) {
-        gotoxy(1, 30); printf("(System): Password too short.");
+        gotoxy(1, 30); printf("\n\n\n\n\n\n\n\n(System): Password too short.");
         getch();
         clearBox(1, 30, 80);
         goto PASSWORD;
@@ -3482,7 +3537,7 @@ PASSWORD:
     /* ------------ CONFIRM PASSWORD ------------ */
     clearBox(3, 23, 20);
     gotoxy(3, 23);
-
+    showCursor(1);         // <-- FIX: show cursor
     i = 0;
 
     while ((ch_int = getch()) != '\r') {
@@ -3496,12 +3551,18 @@ PASSWORD:
             printf("*");
         }
     }
+    showCursor(0);         // <-- hide cursor after typing
 
     if (strcmp(passW, passConfirm) != 0) {
-        gotoxy(1, 30); printf("(System): Passwords do not match.");
-        getch();
-        clearBox(1, 30, 80);
-        goto PASSWORD;
+        
+	    gotoxy(1, 30);
+	    printf("\n\n(System): Passwords do not match.");
+	
+	    getch();
+	
+	    clearBox(1, 30, 80);
+	
+	    goto PASSWORD;
     }
 
     /* ------------ NAV ------------ */
@@ -3511,11 +3572,11 @@ NAV2:
     clearBox(1, 30, 120);
     clearBox(1, 31, 120);
 
-    gotoxy(20, 29);
-    printf("+-----------------+      +-----------------+\n");
-    gotoxy(20, 30);
-    printf("|     [N] Next    |      |     [B] Back    |\n");
     gotoxy(20, 31);
+    printf("+-----------------+      +-----------------+\n");
+    gotoxy(20, 32);
+    printf("|     [N] Next    |      |     [B] Back    |\n");
+    gotoxy(20, 33);
     printf("+-----------------+      +-----------------+\n\n");
 
     ch = getch();
@@ -3724,10 +3785,10 @@ void positionChoices() {
     system("cls");
     printf("\n\n\n");
     printf("                                  +--------------------------------------------------+\n");
-    printf("                                  |            ACCOUNT CREATED SUCCESSFULLY          |\n");
+    printf("                                  |            ACCOUNT CREATED           |\n");
     printf("                                  +--------------------------------------------------+\n\n");
-    printf("                                  Redirecting to Login Page...\n");
-    Sleep(1500);
+    printf("                                  Press any key to redirect to Login Page...\n");
+   key = getch();
 
     loading_screen();
     loginPage();
@@ -4185,8 +4246,8 @@ ConfirmMenu:
     printf("                                Enrollment details saved successfully.\n\n");
 
     printf("                                To complete your enrollment, visit our main office:\n");
-    printf("                                  1. Payment: P1,500.00 Reservation Fee\n");
-    printf("                                  2. Submit required documents\n\n");
+    printf("                                  1. Payment: P1,500.00 Reservation Fee to the Accounting Office \n");
+    printf("                                  2. Submit required documents to the Registrar's Office\n\n");
 
     printf("                                Required Documents:\n\n");
 
@@ -4221,6 +4282,8 @@ ConfirmMenu:
     goToDashboard();
     return;
 }
+
+
 
 
 
@@ -4736,18 +4799,33 @@ void saveUserToFile() {
         return;
     }
 
+    // Ensure facultyType is always set
+    char actualFacultyType[50];
+    if (strcmp(roleChoice, "Faculty") == 0) {
+        strcpy(actualFacultyType, facultyType);
+    } else {
+        strcpy(actualFacultyType, "N/A");  // non-faculty users
+    }
+
+    // REMOVE any trailing \r or \n
+    size_t len = strlen(actualFacultyType);
+    if (len > 0 && (actualFacultyType[len-1] == '\r' || actualFacultyType[len-1] == '\n')) {
+        actualFacultyType[len-1] = '\0';
+    }
+
     fprintf(file,
         "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n",
         email, passW, roleChoice, firstN, middleN, lastN,
         birthD, sex, contactN, house, barangay, city,
-        province, addressFull, programChoice,
-        (strcmp(roleChoice, "Faculty") == 0 ? facultyType : "N/A")
+        province, addressFull, programChoice, actualFacultyType
     );
 
     fclose(file);
-    printf("(System): User saved successfully!\n");
+    printf("(System): User saved successfully! Press any key to proceed\n");
     getch();
 }
+
+
 
 
 /* Return 1 if email exists in users.txt, else 0 */
@@ -4779,17 +4857,18 @@ int verifyLogin(const char *loginEmail, const char *password,
 
     char line[4096];
 
-    /* Temporary storage for ALL 16 fields */
     char storedEmail[300], storedPassword[200], storedRole[100];
     char storedFirst[100], storedMiddle[100], storedLast[100];
     char storedBirth[20], storedSex[20], storedContact[30];
     char storedHouse[80], storedBarangay[50], storedCity[50];
     char storedProvince[50], storedAddress[300], storedProgram[200];
-    char storedEmploymentType[20];
+    char storedEmploymentType[50];
 
     while (fgets(line, sizeof(line), file)) {
 
-        /* Parse EXACTLY 16 fields */
+        // Remove newline from the line
+        line[strcspn(line, "\r\n")] = 0;
+
         int items = sscanf(line,
             "%299[^|]|%199[^|]|%99[^|]|"
             "%99[^|]|%99[^|]|%99[^|]|"
@@ -4804,15 +4883,29 @@ int verifyLogin(const char *loginEmail, const char *password,
             storedEmploymentType
         );
 
-        /* If line is malformed, skip it */
-        if (items != 16)
-            continue;
+        if (items != 16) continue;
 
-        /* Match login credentials */
+        // Remove any leftover \r or \n from each field
+        storedEmail[strcspn(storedEmail, "\r\n")] = 0;
+        storedPassword[strcspn(storedPassword, "\r\n")] = 0;
+        storedRole[strcspn(storedRole, "\r\n")] = 0;
+        storedFirst[strcspn(storedFirst, "\r\n")] = 0;
+        storedMiddle[strcspn(storedMiddle, "\r\n")] = 0;
+        storedLast[strcspn(storedLast, "\r\n")] = 0;
+        storedBirth[strcspn(storedBirth, "\r\n")] = 0;
+        storedSex[strcspn(storedSex, "\r\n")] = 0;
+        storedContact[strcspn(storedContact, "\r\n")] = 0;
+        storedHouse[strcspn(storedHouse, "\r\n")] = 0;
+        storedBarangay[strcspn(storedBarangay, "\r\n")] = 0;
+        storedCity[strcspn(storedCity, "\r\n")] = 0;
+        storedProvince[strcspn(storedProvince, "\r\n")] = 0;
+        storedAddress[strcspn(storedAddress, "\r\n")] = 0;
+        storedProgram[strcspn(storedProgram, "\r\n")] = 0;
+        storedEmploymentType[strcspn(storedEmploymentType, "\r\n")] = 0;
+
         if (strcmp(storedEmail, loginEmail) == 0 &&
             strcmp(storedPassword, password) == 0) {
 
-            /* Transfer all data into global variables */
             strcpy(email, storedEmail);
             strcpy(passW, storedPassword);
             strcpy(roleChoice, storedRole);
@@ -4828,8 +4921,6 @@ int verifyLogin(const char *loginEmail, const char *password,
             strcpy(province, storedProvince);
             strcpy(addressFull, storedAddress);
             strcpy(programChoice, storedProgram);
-
-            /* Store faculty type if applicable */
             if (strcmp(roleChoice, "Faculty") == 0)
                 strcpy(facultyType, storedEmploymentType);
             else
@@ -4837,8 +4928,8 @@ int verifyLogin(const char *loginEmail, const char *password,
 
             snprintf(Fullname, sizeof(Fullname), "%s, %s", lastN, firstN);
 
-            if (roleOut)     strcpy(roleOut, storedRole);
-            if (programOut)  strcpy(programOut, storedProgram);
+            if (roleOut) strcpy(roleOut, storedRole);
+            if (programOut) strcpy(programOut, storedProgram);
 
             fclose(file);
             return 1;
@@ -4848,6 +4939,7 @@ int verifyLogin(const char *loginEmail, const char *password,
     fclose(file);
     return 0;
 }
+
 
 /* simple wrapper used by login page */
 int verifyPassword(const char *loginEmail, const char *password) {
